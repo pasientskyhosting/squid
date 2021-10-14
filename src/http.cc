@@ -396,43 +396,8 @@ HttpStateData::reusableReply(HttpStateData::ReuseDecision &decision)
     // allow HTTP violations to IGNORE those controls (ie re-block caching Auth)
     if (request && (request->flags.auth || request->flags.authSent)) {
         bool mayStore = false;
-#if USE_HTTP_VIOLATIONS
-        if (!rep->cache_control)
-            mayStore = true;
-            debugs(22, 3, HERE << "Ignoring authenticated and server reply missing Cache-Control");
-#else
-        if (!rep->cache_control)
-            return decision.make(ReuseDecision::reuseNot,
-                                 "authenticated and server reply missing Cache-Control");
-        if (ignoreCacheControl)
-            return decision.make(ReuseDecision::reuseNot,
-                                 "authenticated and ignoring Cache-Control");
-#endif
-        // HTTPbis pt6 section 3.2: a response CC:public is present
-        if (rep->cache_control->hasPublic()) {
-            debugs(22, 3, HERE << "Authenticated but server reply Cache-Control:public");
-            mayStore = true;
-
-            // HTTPbis pt6 section 3.2: a response CC:must-revalidate is present
-        } else if (rep->cache_control->hasMustRevalidate()) {
-            debugs(22, 3, HERE << "Authenticated but server reply Cache-Control:must-revalidate");
-            mayStore = true;
-
-#if USE_HTTP_VIOLATIONS
-            // NP: given the must-revalidate exception we should also be able to exempt no-cache.
-            // HTTPbis WG verdict on this is that it is omitted from the spec due to being 'unexpected' by
-            // some. The caching+revalidate is not exactly unsafe though with Squids interpretation of no-cache
-            // (without parameters) as equivalent to must-revalidate in the reply.
-        } else if (rep->cache_control->hasNoCacheWithoutParameters()) {
-            debugs(22, 3, HERE << "Authenticated but server reply Cache-Control:no-cache (equivalent to must-revalidate)");
-            mayStore = true;
-#endif
-
-            // HTTPbis pt6 section 3.2: a response CC:s-maxage is present
-        } else if (rep->cache_control->hasSMaxAge()) {
-            debugs(22, 3, HERE << "Authenticated but server reply Cache-Control:s-maxage");
-            mayStore = true;
-        }
+        
+        mayStore = true;
 
         if (!mayStore)
             return decision.make(ReuseDecision::reuseNot, "authenticated transaction");
