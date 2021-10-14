@@ -395,15 +395,19 @@ HttpStateData::reusableReply(HttpStateData::ReuseDecision &decision)
     // RFC 2068, sec 14.9.4 - MUST NOT cache any response with Authentication UNLESS certain CC controls are present
     // allow HTTP violations to IGNORE those controls (ie re-block caching Auth)
     if (request && (request->flags.auth || request->flags.authSent)) {
+        bool mayStore = false;
+#if USE_HTTP_VIOLATIONS
+        if (!rep->cache_control)
+            mayStore = true;
+            debugs(22, 3, HERE << "Ignoring authenticated and server reply missing Cache-Control");
+#else
         if (!rep->cache_control)
             return decision.make(ReuseDecision::reuseNot,
                                  "authenticated and server reply missing Cache-Control");
-
         if (ignoreCacheControl)
             return decision.make(ReuseDecision::reuseNot,
                                  "authenticated and ignoring Cache-Control");
-
-        bool mayStore = false;
+#endif
         // HTTPbis pt6 section 3.2: a response CC:public is present
         if (rep->cache_control->hasPublic()) {
             debugs(22, 3, HERE << "Authenticated but server reply Cache-Control:public");
