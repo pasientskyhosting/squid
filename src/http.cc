@@ -396,6 +396,10 @@ HttpStateData::reusableReply(HttpStateData::ReuseDecision &decision)
     // allow HTTP violations to IGNORE those controls (ie re-block caching Auth)
     if (request && (request->flags.auth || request->flags.authSent)) {
         bool mayStore = true;
+
+        if (!mayStore)
+            return decision.make(ReuseDecision::reuseNot, "authenticated transaction");
+
         // NP: We want to store private Docker images, npm packages etc. 
     }
 
