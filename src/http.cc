@@ -395,15 +395,8 @@ HttpStateData::reusableReply(HttpStateData::ReuseDecision &decision)
     // RFC 2068, sec 14.9.4 - MUST NOT cache any response with Authentication UNLESS certain CC controls are present
     // allow HTTP violations to IGNORE those controls (ie re-block caching Auth)
     if (request && (request->flags.auth || request->flags.authSent)) {
-        bool mayStore = false;
-        
-        mayStore = true;
-
-        if (!mayStore)
-            return decision.make(ReuseDecision::reuseNot, "authenticated transaction");
-
-        // NP: response CC:no-cache is equivalent to CC:must-revalidate,max-age=0. We MAY cache, and do so.
-        // NP: other request CC flags are limiters on HIT/MISS/REFRESH. We don't care about here.
+        bool mayStore = true;
+        // NP: We want to store private Docker images, npm packages etc. 
     }
 
     /* HACK: The "multipart/x-mixed-replace" content type is used for
